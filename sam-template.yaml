@@ -1,0 +1,207 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AssistIQ - AI IT Support Chatbot (Lex V2 + Lambda + DynamoDB + SES + API Gateway + S3)
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: AssistIQ
+  SourceEmail:
+    Type: String
+    Description: Verified SES sender email (must be verified in SES)
+  SupportEmail:
+    Type: String
+    Description: IT Support destination email (must be verified if SES sandbox)
+  BotId:
+    Type: String
+    Description: Existing Lex V2 BotId to use (we import config via console/CLI). Leave empty to fill later.
+    Default: ""
+  BotAliasId:
+    Type: String
+    Description: Lex V2 BotAliasId (prod/test) to target via Chat Proxy.
+    Default: ""
+  BotLocaleId:
+    Type: String
+    Description: Lex V2 locale id (e.g., en_US)
+    Default: en_US
+  WebsiteBucketName:
+    Type: String
+    Description: S3 bucket name to host the website (must be globally unique). If empty, one will be generated.
+    Default: ""
+
+Conditions:
+  HasBucketName: !Not [!Equals [!Ref WebsiteBucketName, ""]]
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 20
+    MemorySize: 256
+    Tracing: Active
+
+Resources:
+  FAQTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-IT_FAQ'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  ChatLogsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${ProjectName}-ChatLogs'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  FulfillmentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-Fulfillment'
+      CodeUri: backend/functions/fulfillment/
+      Handler: app.lambda_handler
+      Environment:
+        Variables:
+          FAQ_TABLE_NAME: !Ref FAQTable
+          LOG_TABLE_NAME: !Ref ChatLogsTable
+          SOURCE_EMAIL: !Ref SourceEmail
+          SUPPORT_EMAIL: !Ref SupportEmail
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            - Sid: DynamoDBAccess
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:Scan
+                - dynamodb:UpdateItem
+              Resource:
+                - !GetAtt FAQTable.Arn
+                - !GetAtt ChatLogsTable.Arn
+        - Statement:
+            - Sid: SESSend
+              Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+              Resource: "*"
+
+  ChatProxyFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-ChatProxy'
+      CodeUri: backend/functions/chat_proxy/
+      Handler: app.lambda_handler
+      Environment:
+        Variables:
+          BOT_ID: !Ref BotId
+          BOT_ALIAS_ID: !Ref BotAliasId
+          BOT_LOCALE_ID: !Ref BotLocaleId
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            - Sid: LexRuntime
+              Effect: Allow
+              Action:
+                - lex:RecognizeText
+                - lex:RecognizeUtterance
+                - lex:StartConversation
+              Resource: "*"
+
+  HttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowHeaders:
+          - "*"
+        AllowMethods:
+          - GET
+          - POST
+      StageName: '$default'
+
+  ChatRoute:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${ProjectName}-ChatProxyRoute'
+      CodeUri: backend/functions/chat_proxy/
+      Handler: app.lambda_handler
+      Events:
+        ChatPost:
+          Type: HttpApi
+          Properties:
+            Path: /chat
+            Method: POST
+            ApiId: !Ref HttpApi
+      Environment:
+        Variables:
+          BOT_ID: !Ref BotId
+          BOT_ALIAS_ID: !Ref BotAliasId
+          BOT_LOCALE_ID: !Ref BotLocaleId
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            - Sid: LexRuntime
+              Effect: Allow
+              Action:
+                - lex:RecognizeText
+                - lex:RecognizeUtterance
+                - lex:StartConversation
+              Resource: "*"
+
+  WebsiteBucket:
+    Type: AWS::S3::Bucket
+    Condition: HasBucketName
+    Properties:
+      BucketName: !Ref WebsiteBucketName
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        BlockPublicPolicy: false
+        IgnorePublicAcls: false
+        RestrictPublicBuckets: false
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+
+  WebsiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Condition: HasBucketName
+    Properties:
+      Bucket: !Ref WebsiteBucketName
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: "*"
+            Action: s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${WebsiteBucketName}/*'
+
+Outputs:
+  ApiEndpoint:
+    Description: Public HTTP API endpoint for chat
+    Value: !Sub 'https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/chat'
+  WebsiteBucketName:
+    Description: S3 bucket hosting the AssistIQ website
+    Value: !If [HasBucketName, !Ref WebsiteBucketName, !Sub '${AWS::AccountId}-${ProjectName}-web-${AWS::Region}']
+  FAQTableName:
+    Description: DynamoDB table for FAQs
+    Value: !Ref FAQTable
+  ChatLogsTableName:
+    Description: DynamoDB table for chat logs
+    Value: !Ref ChatLogsTable

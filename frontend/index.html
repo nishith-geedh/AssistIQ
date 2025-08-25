@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AssistIQ · Modern AI IT Support</title>
+  <meta name="description" content="AssistIQ is a modern AI-powered IT support platform for fast, secure, and delightful employee help.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css"/>
+</head>
+<body>
+  <!-- Ambient scene -->
+  <div class="scene" aria-hidden="true">
+    <div class="stars"></div>
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
+
+  <!-- NAVBAR (minimal, sticky & auto-hide on scroll) -->
+<nav class="nav glass" role="navigation" aria-label="Primary">
+  <div class="nav__inner">
+    <a class="brand" href="#home" aria-label="AssistIQ home">
+      <img src="assets/logo.svg" alt="" width="26" height="26"/>
+      <span>AssistIQ</span>
+    </a>
+
+    <div class="nav__links">
+      <a href="#about" class="link">About</a>
+      <a href="#features" class="link">Features</a>
+      <a href="#solutions" class="link">Solutions</a>
+      <a href="#how" class="link">How it works</a>
+      <a href="#clients" class="link">Clients</a>
+    </div>
+
+    <div class="nav__placeholder"></div>  <!-- empty div for right space -->
+  </div>
+</nav>
+
+
+  <!-- HERO -->
+  <header id="home" class="hero">
+    <div class="hero__content panel">
+      <div class="hero__text">
+        <h1>IT support that feels <span class="accent">instant</span> — and looks <span class="accent2">incredible</span>.</h1>
+        <p>
+          Meet AssistIQ: an AI-powered helpdesk that resets passwords, fixes Wi-Fi, and routes edge cases to your IT team —
+          with enterprise-grade security and a delightful, modern UI.
+        </p>
+        <div class="cta">
+          <a href="#features" class="button primary">Explore Features</a>
+          <a href="#how" class="button ghost">Dive In</a>
+        </div>
+        <div class="trust">
+          <span class="badge">SOC2-ready</span>
+          <span class="badge">IAM least-privilege</span>
+          <span class="badge">Encryption in transit & at rest</span>
+        </div>
+      </div>
+
+      <!-- Device mock with NO scrollbars -->
+      <div class="hero__mock">
+        <div class="device">
+          <div class="device__screen no-scroll">
+            <div class="device__title">AssistIQ · Team Portal</div>
+            <div class="device__msg bot">Hi! Need help with VPN or MFA?</div>
+            <div class="device__msg user">Reset my email password</div>
+            <div class="device__msg bot">Done ✅ Check your inbox for the reset link.</div>
+            <div class="device__msg user">Wi-Fi drops on 5GHz</div>
+            <div class="device__msg bot">Try switching to “Corp-2.4G”. Want me to create a ticket?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- ABOUT -->
+    <section id="about" class="section">
+      <div class="section__head">
+        <h2>Why AssistIQ</h2>
+        <p class="lead">Support people actually enjoy using — fast, friendly, and obsessively secure.</p>
+      </div>
+      <div class="grid three">
+        <div class="panel card">
+          <h3>Delightful by default</h3>
+          <p>Clear language, smart defaults, and friction-free flows that reduce time-to-answer and boost adoption.</p>
+        </div>
+        <div class="panel card">
+          <h3>Built for scale</h3>
+          <p>Stateless microservices on AWS with robust observability. Scale from 50 to 50,000 employees with ease.</p>
+        </div>
+        <div class="panel card">
+          <h3>Secure to the core</h3>
+          <p>IAM least-privilege, VPC isolation, CloudWatch monitoring, and audit-ready logs in DynamoDB.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features" class="section">
+      <div class="section__head">
+        <h2>What it can do</h2>
+        <p class="lead">Automate the common, escalate the rare, and learn from everything.</p>
+      </div>
+      <div class="grid four features">
+        <article class="panel feature">
+          <div class="pill">L1 automation</div>
+          <h3>Password resets</h3>
+          <p>End-to-end flow with identity checks and audit logs.</p>
+        </article>
+        <article class="panel feature">
+          <div class="pill">Network</div>
+          <h3>Wi-Fi & VPN help</h3>
+          <p>Interactive troubleshooting guides with device-aware tips.</p>
+        </article>
+        <article class="panel feature">
+          <div class="pill">Access</div>
+          <h3>Email & MFA</h3>
+          <p>Step-by-step fixes, temporary codes, and escalation when needed.</p>
+        </article>
+        <article class="panel feature">
+          <div class="pill">Learning</div>
+          <h3>Adaptive brain</h3>
+          <p>Low-confidence queries are flagged, labeled, and retrained.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- SOLUTIONS -->
+    <section id="solutions" class="section">
+      <div class="section__head">
+        <h2>Solutions for every team</h2>
+        <p class="lead">AssistIQ plugs into your stack and makes everyone faster.</p>
+      </div>
+      <div class="grid two big-panels">
+        <div class="panel gradient purple">
+          <h3>Employee Self-Service</h3>
+          <ul class="ticks">
+            <li>24×7 chat with instant, friendly answers</li>
+            <li>Guided flows for common tasks</li>
+            <li>Human handoff when needed</li>
+          </ul>
+        </div>
+        <div class="panel gradient green">
+          <h3>IT Team Superpowers</h3>
+          <ul class="ticks">
+            <li>Context-rich tickets via SES email</li>
+            <li>DynamoDB analytics & dashboards</li>
+            <li>CloudWatch alerts for anomalies</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how" class="section">
+      <div class="section__head">
+        <h2>How it works</h2>
+        <p class="lead">From question → answer → insight.</p>
+      </div>
+      <div class="timeline">
+        <div class="step">
+          <div class="dot">1</div>
+          <div class="content panel">
+            <h4>Ask</h4>
+            <p>Employee asks via chat — on web or internal portal.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="dot">2</div>
+          <div class="content panel">
+            <h4>Automate</h4>
+            <p>AssistIQ handles known flows instantly: resets, network, MFA, and app FAQs.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="dot">3</div>
+          <div class="content panel">
+            <h4>Escalate</h4>
+            <p>Edge cases route to your IT mailbox with full context and logs.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="dot">4</div>
+          <div class="content panel">
+            <h4>Learn</h4>
+            <p>Low-confidence queries are reviewed and added to the brain. It gets better every week.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLIENTS -->
+    <section id="clients" class="section">
+      <div class="section__head">
+        <h2>Loved by modern teams</h2>
+        <p class="lead">From fintech to SaaS to remote-first engineering orgs.</p>
+      </div>
+      <div class="logo-row panel">
+        <span class="logo-badge">FinServ Co.</span>
+        <span class="logo-badge">Volt Cloud</span>
+        <span class="logo-badge">Nova Health</span>
+        <span class="logo-badge">Beacon Retail</span>
+        <span class="logo-badge">ZenStack</span>
+      </div>
+      <br/><br/><br/>
+      <div class="grid three testimonials">
+        <div class="panel">
+          <p class="quote">“AssistIQ offloaded 40% of our L1 tickets in month one.”</p>
+          <div class="who">Head of IT · FinServ Co.</div>
+        </div>
+        <div class="panel">
+          <p class="quote">“Our employees actually enjoy support now. That’s a first.”</p>
+          <div class="who">Workplace Ops Lead</div>
+        </div>
+        <div class="panel">
+          <p class="quote">“Setup took hours, not weeks. Cleanest rollout this year.”</p>
+          <div class="who">CTO · SaaS Startup</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER (clean, seamless) -->
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="foot-brand">
+        <img src="assets/logo.svg" alt="" width="24" height="24"/>
+        <strong>AssistIQ</strong>
+      </div>
+      <div class="foot-row">
+        <div class="col">
+          <h5>Product</h5>
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#solutions">Solutions</a>
+        </div>
+        <div class="col">
+          <h5>Company</h5>
+          <a href="#about">About</a>
+          <a href="#clients">Clients</a>
+        </div>
+        <div class="col">
+          <h5>Info</h5>
+          <span class="status ok">All systems operational</span>
+          <span>© <span id="year"></span> AssistIQ</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- FLOATING CHAT BUTTON -->
+<button id="chatFab" class="chat-fab" aria-label="Open AssistIQ chat">
+  💭 <span class="fab-text">Ask AssistIQ</span>
+</button>
+
+  <!-- Chat container (created on first click, then persists) -->
+  <div id="chatContainer" aria-live="polite"></div>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

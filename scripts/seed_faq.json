@@ -1,0 +1,31 @@
+[
+  {
+    "id": "1",
+    "q_keywords": [
+      "password reset",
+      "forgot password",
+      "reset my password"
+    ],
+    "answer": "To reset your password, open the corporate portal, click 'Forgot Password', and follow the OTP steps. If MFA is enabled, use your authenticator app."
+  },
+  {
+    "id": "2",
+    "q_keywords": [
+      "wifi",
+      "wi-fi",
+      "internet",
+      "connect to wifi"
+    ],
+    "answer": "If Wi\u2011Fi isn't working: 1) Toggle Airplane mode off, 2) Forget and rejoin 'CorpNet' using your AD credentials, 3) If still failing, try wired LAN or raise a ticket."
+  },
+  {
+    "id": "3",
+    "q_keywords": [
+      "email",
+      "outlook",
+      "cannot access email",
+      "mail"
+    ],
+    "answer": "For email issues: 1) Check Outlook Service Status, 2) Clear cache, 3) Re-add your account. For password prompts, lock/unlock your device and ensure VPN is connected."
+  }
+]

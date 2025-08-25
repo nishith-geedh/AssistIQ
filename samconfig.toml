@@ -1,0 +1,12 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "AssistIQ"
+resolve_s3 = true
+s3_prefix = "AssistIQ"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+parameter_overrides = "ProjectName=\"AssistIQ\" SourceEmail=\"deadcalmyes@gmail.com\" SupportEmail=\"geedhnishith@gmail.com\" BotId=\"TCZLJE8SZS\" BotAliasId=\"TSTALIASID\" BotLocaleId=\"en_US\" WebsiteBucketName=\"assistiq-website\""
+image_repositories = []

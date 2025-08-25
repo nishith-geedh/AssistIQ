@@ -1,0 +1,37 @@
+
+const $ = (q)=>document.querySelector(q);
+const messagesEl = $("#messages");
+const inputEl = $("#input");
+const sendBtn = $("#send");
+const yearEl = $("#year"); yearEl.textContent = new Date().getFullYear();
+
+async function sendMessage(){
+  const text = inputEl.value.trim();
+  if(!text) return;
+  appendMsg(text, 'user');
+  inputEl.value='';
+  const endpoint = window.ASSISTIQ_API_ENDPOINT; // set by config.js
+  if(!endpoint){ appendMsg("API not configured. Please set window.ASSISTIQ_API_ENDPOINT in assets/config.js", 'bot'); return; }
+
+  try{
+    const res = await fetch(endpoint, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({ text }) });
+    const data = await res.json();
+    appendMsg(data.answer || "…", 'bot');
+  }catch(e){
+    appendMsg("Network error. Please try again later.", 'bot');
+  }
+}
+
+function appendMsg(text, who){
+  const el = document.createElement('div');
+  el.className = `msg ${who}`;
+  el.textContent = text;
+  messagesEl.appendChild(el);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+sendBtn.addEventListener('click', sendMessage);
+inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendMessage(); });
+
+// minimal config fallback (developer should replace with generated endpoint)
+window.ASSISTIQ_API_ENDPOINT = window.ASSISTIQ_API_ENDPOINT || "https://oz5ieiw1zb.execute-api.us-east-1.amazonaws.com/chat";
