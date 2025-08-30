@@ -48,12 +48,14 @@ def _scan_history(session_id):
 
 def _log(session_id, user_text, bot_reply):
     try:
-        log_table.put_item(Item={
-            "session_id": session_id,
-            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-            "user_text": user_text,
-            "bot_reply": bot_reply
-        })
+        log_table.put_item(
+            Item={
+                "session_id": session_id,
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "user_text": user_text,
+                "bot_reply": bot_reply
+            }
+        )
     except Exception as e:
         print(f"[ERROR] log put_item failed: {e}")
 

@@ -1,35 +1,45 @@
 // AssistIQ — App JS (navbar hide-on-scroll, chat persistence, clean UX)
 
+// =========================
 // Utility
+// =========================
 const $ = (q) => document.querySelector(q);
 
 // Year in footer
 const yearEl = $("#year");
-if (yearEl) yearEl.textContent = new Date().getFullYear();
+if (yearEl) {
+  yearEl.textContent = new Date().getFullYear();
+}
 
-/* =========================
-   Navbar: auto-hide on scroll
-   ========================= */
-{
+// =========================
+// Navbar: auto-hide on scroll
+// =========================
+(() => {
   const nav = document.querySelector(".nav");
+  if (!nav) return;
+
   let lastY = window.scrollY;
   window.addEventListener(
     "scroll",
     () => {
       const y = window.scrollY;
-      if (y > lastY && y > 40) nav.classList.add("nav--hidden"); // scrolling down
-      else nav.classList.remove("nav--hidden"); // scrolling up
+      if (y > lastY && y > 40) {
+        nav.classList.add("nav--hidden"); // scrolling down
+      } else {
+        nav.classList.remove("nav--hidden"); // scrolling up
+      }
       lastY = y;
     },
     { passive: true }
   );
-}
+})();
 
-/* =========================
-   Chat: build once on demand,
-   persist messages in sessionStorage,
-   never close on outside click.
-   ========================= */
+// =========================
+// Chat widget
+// - Build once on demand
+// - Persist messages in sessionStorage
+// - Never close on outside click
+// =========================
 
 // API endpoint (replace for your deployment)
 window.ASSISTIQ_API_ENDPOINT =
@@ -48,7 +58,7 @@ if (!sessionId) {
 const fab = $("#chatFab");
 const chatContainer = $("#chatContainer");
 
-// Helpers for history
+// Helpers for chat history
 function getHistory() {
   try {
     return JSON.parse(sessionStorage.getItem("assistiq_chat_history") || "[]");
@@ -62,6 +72,7 @@ function saveHistory(arr) {
   } catch {}
 }
 
+// Build chat UI
 function buildChat() {
   chatContainer.innerHTML = `
     <section id="chatWidget" class="chat-widget" role="dialog" aria-label="AssistIQ Chat" aria-modal="true" aria-hidden="true">
@@ -88,6 +99,7 @@ function buildChat() {
   const history = getHistory();
   history.forEach((m) => appendMsg(m.text, m.who, false));
 
+  // Open / Close chat
   function openChat() {
     chat.classList.add("open");
     chat.setAttribute("aria-hidden", "false");
@@ -98,13 +110,16 @@ function buildChat() {
     chat.setAttribute("aria-hidden", "true");
   }
 
-  // Toggle from FAB
+  // Toggle via FAB
   fab.addEventListener("click", () => {
-    if (chat.classList.contains("open")) closeChat();
-    else openChat();
+    if (chat.classList.contains("open")) {
+      closeChat();
+    } else {
+      openChat();
+    }
   });
 
-  // Minimize button (no outside-click close!)
+  // Minimize button
   minBtn.addEventListener("click", closeChat);
 
   // Message loop
@@ -145,42 +160,49 @@ function buildChat() {
       const answer = data.answer || data.message || "…";
       appendMsg(answer, "bot");
       persist("bot", answer);
-    } catch (e) {
+    } catch {
       const msg = "Network error. Please try again later.";
       appendMsg(msg, "bot");
       persist("bot", msg);
     }
   }
 
+  // Append message
   function appendMsg(text, who, scroll = true) {
     const el = document.createElement("div");
     el.className = `msg ${who}`;
     el.textContent = text;
     messagesEl.appendChild(el);
-    if (scroll) messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (scroll) {
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
   }
 
+  // Save chat history
   function persist(who, text) {
     const arr = getHistory();
     arr.push({ who, text });
     saveHistory(arr);
   }
 
-  // Bind events
+  // Event bindings
   sendBtn.addEventListener("click", sendMessage);
   inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") sendMessage();
   });
 
-  // Focus trap (keyboard a11y)
+  // Keyboard focus trap
   chat.addEventListener("keydown", (e) => {
     if (e.key !== "Tab") return;
+
     const focusables = chat.querySelectorAll(
       'button,[href],input,textarea,[tabindex]:not([tabindex="-1"])'
     );
     if (!focusables.length) return;
-    const first = focusables[0],
-      last = focusables[focusables.length - 1];
+
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+
     if (e.shiftKey && document.activeElement === first) {
       e.preventDefault();
       last.focus();
@@ -194,7 +216,9 @@ function buildChat() {
   openChat();
 }
 
-// Build once on first click; afterwards just toggle
+// Build once on first FAB click; afterwards just toggle
 fab?.addEventListener("click", () => {
-  if (!document.getElementById("chatWidget")) buildChat();
+  if (!document.getElementById("chatWidget")) {
+    buildChat();
+  }
 });
