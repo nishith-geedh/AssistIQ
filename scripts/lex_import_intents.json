@@ -1,0 +1,19 @@
+{
+  "metadataVersion": "2022-07-14",
+  "resourceType": "BOT",
+  "name": "AssistIQSupportBot",
+  "locale": "en_US",
+  "intents": [
+    { "name": "PasswordReset", "sampleUtterances": ["I forgot my password","reset my password","how do I change my password","can't log in to my account","password expired","help me reset password","reset corporate portal password","forgot AD password","password reset email not received","I need to change my password"] },
+    { "name": "WifiIssue", "sampleUtterances": ["wifi not working","can't connect to Wi-Fi","internet is slow","no internet connection","disconnecting from wifi","wifi keeps dropping","corporate wifi problem","can't join wifi network","wifi requires password","my wifi won't connect"] },
+    { "name": "EmailAccess", "sampleUtterances": ["can't access email","outlook not working","email not syncing","mailbox is down","I can't sign in to outlook","email password prompt","my emails are missing","outlook keeps crashing","webmail not loading","email authentication failed"] },
+    { "name": "AccountLocked", "sampleUtterances": ["account locked","my account is locked","locked out of account","I got locked out","cannot login account locked","account suspended","unlock my account","how to unlock account","AD account locked","login blocked"] },
+    { "name": "VPNIssue", "sampleUtterances": ["VPN won't connect","can't connect to VPN","vpn connection failed","vpn stuck connecting","remote vpn not working","VPN authentication failed","how to setup VPN","vpn client timeout","corporate vpn problem","VPN keeps disconnecting"] },
+    { "name": "SoftwareInstallation", "sampleUtterances": ["install software","how to install zoom","request application install","need admin rights to install","software deployment request","install Microsoft Teams","how to get software on my laptop","install application for work","request install permission","install new program"] },
+    { "name": "HardwareIssue", "sampleUtterances": ["my laptop is broken","hardware issue","screen flickering","keyboard not working","battery not charging","laptop overheating","broken display","replace my laptop","hardware repair request","device not powering on"] },
+    { "name": "SystemSlow", "sampleUtterances": ["computer slow","system is lagging","my pc is running slow","performance issues","slow startup","high cpu usage","system freeze","applications slow","my laptop lags","very slow computer"] },
+    { "name": "PrinterIssue", "sampleUtterances": ["printer not working","can't print","printer offline","paper jam","printer stuck job","add network printer","printer driver problem","printer queue not printing","how to connect to printer","print job failed"] },
+    { "name": "AccessRequest", "sampleUtterances": ["request access","need access to folder","permission to shared drive","request admin rights","request access to application","access to finance folder","grant me permissions","request role change","access request for system","need read/write access"] },
+    { "name": "FallbackIntent", "sampleUtterances": ["I need help","can you assist me","not sure what to do","this is not working","help needed","I don't know how to fix this","get me help","I need support","who can help me","I want to contact IT"] }
+  ]
+}

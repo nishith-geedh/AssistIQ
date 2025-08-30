@@ -336,6 +336,7 @@ body::before {
   background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); color:var(--text)
 }
 
+
 .messages{
   flex:1; overflow:auto; display:flex; flex-direction:column; gap:10px; padding:8px 8px 4px;
   scrollbar-width: thin; /* keeps, but subtle; visually minimal */

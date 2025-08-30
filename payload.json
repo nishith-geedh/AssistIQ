@@ -1,0 +1,12 @@
+{
+  "messageVersion": "1.0",
+  "invocationSource": "DialogCodeHook",
+  "userId": "test-user",
+  "sessionId": "test-1",
+  "inputTranscript": "I forgot my password",
+  "bot": {
+    "name": "AssistIQ",
+    "alias": "TestBotAlias",
+    "version": "1"
+  }
+}

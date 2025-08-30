@@ -3,7 +3,7 @@
 // Utility
 const $ = (q) => document.querySelector(q);
 
-// Year
+// Year in footer
 const yearEl = $("#year");
 if (yearEl) yearEl.textContent = new Date().getFullYear();
 
@@ -13,12 +13,16 @@ if (yearEl) yearEl.textContent = new Date().getFullYear();
 {
   const nav = document.querySelector(".nav");
   let lastY = window.scrollY;
-  window.addEventListener("scroll", () => {
-    const y = window.scrollY;
-    if (y > lastY && y > 40) nav.classList.add("nav--hidden");     // scrolling down
-    else nav.classList.remove("nav--hidden");                       // scrolling up
-    lastY = y;
-  }, { passive: true });
+  window.addEventListener(
+    "scroll",
+    () => {
+      const y = window.scrollY;
+      if (y > lastY && y > 40) nav.classList.add("nav--hidden"); // scrolling down
+      else nav.classList.remove("nav--hidden"); // scrolling up
+      lastY = y;
+    },
+    { passive: true }
+  );
 }
 
 /* =========================
@@ -32,15 +36,30 @@ window.ASSISTIQ_API_ENDPOINT =
   window.ASSISTIQ_API_ENDPOINT ||
   "https://oz5ieiw1zb.execute-api.us-east-1.amazonaws.com/chat";
 
+// Persistent sessionId stored in sessionStorage
+let sessionId = sessionStorage.getItem("assistiq_sessionId");
+if (!sessionId) {
+  sessionId = crypto.randomUUID
+    ? crypto.randomUUID()
+    : "sess-" + Math.random().toString(36).substr(2, 9);
+  sessionStorage.setItem("assistiq_sessionId", sessionId);
+}
+
 const fab = $("#chatFab");
 const chatContainer = $("#chatContainer");
 
-function getHistory(){
-  try { return JSON.parse(sessionStorage.getItem("assistiq_chat_history") || "[]"); }
-  catch { return []; }
+// Helpers for history
+function getHistory() {
+  try {
+    return JSON.parse(sessionStorage.getItem("assistiq_chat_history") || "[]");
+  } catch {
+    return [];
+  }
 }
-function saveHistory(arr){
-  try { sessionStorage.setItem("assistiq_chat_history", JSON.stringify(arr)); } catch {}
+function saveHistory(arr) {
+  try {
+    sessionStorage.setItem("assistiq_chat_history", JSON.stringify(arr));
+  } catch {}
 }
 
 function buildChat() {
@@ -67,14 +86,14 @@ function buildChat() {
 
   // Restore previous session messages
   const history = getHistory();
-  history.forEach(m => appendMsg(m.text, m.who, false));
+  history.forEach((m) => appendMsg(m.text, m.who, false));
 
   function openChat() {
     chat.classList.add("open");
     chat.setAttribute("aria-hidden", "false");
     setTimeout(() => inputEl?.focus(), 180);
   }
-  function closeChat() { // minimize only
+  function closeChat() {
     chat.classList.remove("open");
     chat.setAttribute("aria-hidden", "true");
   }
@@ -89,68 +108,86 @@ function buildChat() {
   minBtn.addEventListener("click", closeChat);
 
   // Message loop
-  async function sendMessage(){
+  async function sendMessage() {
     const text = inputEl.value.trim();
-    if(!text) return;
-    appendMsg(text, 'user');
-    persist('user', text);
-    inputEl.value='';
+    if (!text) return;
+
+    appendMsg(text, "user");
+    persist("user", text);
+    inputEl.value = "";
 
     const endpoint = window.ASSISTIQ_API_ENDPOINT;
-    if(!endpoint){
+    if (!endpoint) {
       const msg = "API not configured. Set window.ASSISTIQ_API_ENDPOINT.";
-      appendMsg(msg, 'bot'); persist('bot', msg);
+      appendMsg(msg, "bot");
+      persist("bot", msg);
       return;
     }
 
-    try{
+    try {
       const res = await fetch(endpoint, {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ text })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, sessionId }),
       });
 
-      if(!res.ok){
-        const errText = await res.text().catch(()=> "");
-        const msg = `Server error (${res.status}). ${errText || "Please try later."}`;
-        appendMsg(msg, 'bot'); persist('bot', msg);
+      if (!res.ok) {
+        const errText = await res.text().catch(() => "");
+        const msg = `Server error (${res.status}). ${
+          errText || "Please try later."
+        }`;
+        appendMsg(msg, "bot");
+        persist("bot", msg);
         return;
       }
 
-      const data = await res.json().catch(()=> ({}));
+      const data = await res.json().catch(() => ({}));
       const answer = data.answer || data.message || "…";
-      appendMsg(answer, 'bot'); persist('bot', answer);
-    }catch(e){
+      appendMsg(answer, "bot");
+      persist("bot", answer);
+    } catch (e) {
       const msg = "Network error. Please try again later.";
-      appendMsg(msg, 'bot'); persist('bot', msg);
+      appendMsg(msg, "bot");
+      persist("bot", msg);
     }
   }
 
-  function appendMsg(text, who, scroll = true){
-    const el = document.createElement('div');
+  function appendMsg(text, who, scroll = true) {
+    const el = document.createElement("div");
     el.className = `msg ${who}`;
     el.textContent = text;
     messagesEl.appendChild(el);
-    if(scroll) messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (scroll) messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  function persist(who, text){
+  function persist(who, text) {
     const arr = getHistory();
     arr.push({ who, text });
     saveHistory(arr);
   }
 
-  sendBtn.addEventListener('click', sendMessage);
-  inputEl.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendMessage(); });
+  // Bind events
+  sendBtn.addEventListener("click", sendMessage);
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
 
   // Focus trap (keyboard a11y)
-  chat.addEventListener('keydown', (e)=>{
-    if(e.key !== 'Tab') return;
-    const focusables = chat.querySelectorAll('button,[href],input,textarea,[tabindex]:not([tabindex="-1"])');
-    if(!focusables.length) return;
-    const first = focusables[0], last = focusables[focusables.length - 1];
-    if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
-    else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  chat.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    const focusables = chat.querySelectorAll(
+      'button,[href],input,textarea,[tabindex]:not([tabindex="-1"])'
+    );
+    if (!focusables.length) return;
+    const first = focusables[0],
+      last = focusables[focusables.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
   });
 
   // Open immediately on first build

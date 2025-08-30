@@ -74,6 +74,7 @@ Resources:
         Variables:
           FAQ_TABLE_NAME: !Ref FAQTable
           LOG_TABLE_NAME: !Ref ChatLogsTable
+          SESSION_TABLE_NAME: AssistIQ-SessionState
           SOURCE_EMAIL: !Ref SourceEmail
           SUPPORT_EMAIL: !Ref SupportEmail
       Policies:

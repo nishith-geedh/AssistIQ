@@ -1,85 +1,111 @@
 import os
 import json
-import boto3
 import uuid
+import time
+import boto3
+from boto3.dynamodb.conditions import Attr
 
-lex = boto3.client('lexv2-runtime')
+lex_client = boto3.client("lexv2-runtime")
+dynamodb = boto3.resource("dynamodb")
 
-BOT_ID = os.environ.get('BOT_ID')
-BOT_ALIAS_ID = os.environ.get('BOT_ALIAS_ID')
-BOT_LOCALE_ID = os.environ.get('BOT_LOCALE_ID', 'en_US')
+BOT_ID = os.environ.get("BOT_ID")
+BOT_ALIAS_ID = os.environ.get("BOT_ALIAS_ID")
+BOT_LOCALE_ID = os.environ.get("BOT_LOCALE_ID", "en_US")
+LOGS_TABLE_NAME = os.environ.get("LOGS_TABLE_NAME", "AssistIQ-ChatLogs")
+
+log_table = dynamodb.Table(LOGS_TABLE_NAME)
+
+def _cors_headers():
+    return {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "OPTIONS,GET,POST",
+        "Access-Control-Allow-Headers": "*",
+    }
+
+def _response(status_code, body):
+    return {
+        "statusCode": status_code,
+        "headers": _cors_headers(),
+        "body": json.dumps(body),
+    }
+
+def _scan_history(session_id):
+    items = []
+    try:
+        resp = log_table.scan(FilterExpression=Attr("session_id").eq(session_id))
+        items.extend(resp.get("Items", []))
+        while "LastEvaluatedKey" in resp:
+            resp = log_table.scan(
+                FilterExpression=Attr("session_id").eq(session_id),
+                ExclusiveStartKey=resp["LastEvaluatedKey"]
+            )
+            items.extend(resp.get("Items", []))
+    except Exception as e:
+        print(f"[WARN] history scan failed for {session_id}: {e}")
+    items.sort(key=lambda x: x.get("timestamp", ""))
+    return items
+
+def _log(session_id, user_text, bot_reply):
+    try:
+        log_table.put_item(Item={
+            "session_id": session_id,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "user_text": user_text,
+            "bot_reply": bot_reply
+        })
+    except Exception as e:
+        print(f"[ERROR] log put_item failed: {e}")
 
 def lambda_handler(event, context):
-    # Parse incoming HTTP API event body safely
+    # Handle CORS preflight (OPTIONS)
+    if event.get("requestContext", {}).get("http", {}).get("method") == "OPTIONS":
+        return _response(204, {})
+
     try:
-        body = json.loads(event.get('body') or '{}')
+        body = json.loads(event.get("body") or "{}")
     except Exception:
         body = {}
 
-    text = (body.get('text') or '').strip()
-    session_id = body.get('sessionId') or str(uuid.uuid4())
+    user_text = (body.get("text") or "").strip()
+    session_id = body.get("sessionId") or str(uuid.uuid4())
 
-    # Validate required environment variables
     if not BOT_ID or not BOT_ALIAS_ID:
-        return {
-            "statusCode": 500,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*"
-            },
-            "body": json.dumps({
-                "error": "Lex bot not configured (BOT_ID or BOT_ALIAS_ID missing)."
-            })
-        }
-
-    # Validate input text
-    if not text:
-        return {
-            "statusCode": 400,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*"
-            },
-            "body": json.dumps({
-                "error": "Missing required parameter: text"
-            })
-        }
+        return _response(500, {"error": "Lex bot not configured."})
+    if not user_text:
+        return _response(400, {"error": "Missing required parameter: text"})
 
     try:
-        resp = lex.recognize_text(
+        lex_resp = lex_client.recognize_text(
             botId=BOT_ID,
             botAliasId=BOT_ALIAS_ID,
             localeId=BOT_LOCALE_ID,
             sessionId=session_id,
-            text=text
+            text=user_text,
         )
     except Exception as e:
-        # Log the error, then return a 500 response
-        return {
-            "statusCode": 500,
-            "headers": {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*"
-            },
-            "body": json.dumps({
-                "error": "Error calling Lex recognize_text",
-                "details": str(e)
-            })
-        }
+        return _response(500, {"error": "Error calling Lex", "details": str(e)})
 
-    messages = resp.get('messages') or []
-    answer = "\n".join(m.get('content', '') for m in messages)
+    # Compose bot reply
+    msg_chunks = [m.get("content", "") for m in lex_resp.get("messages", []) if m.get("content")]
+    bot_reply = "\n".join(msg_chunks) if msg_chunks else ""
 
-    return {
-        "statusCode": 200,
-        "headers": {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
-        },
-        "body": json.dumps({
-            "sessionId": session_id,
-            "messages": messages,
-            "raw": resp,
-            "answer": answer
-        })
-    }
+    # Save to logs
+    _log(session_id, user_text, bot_reply)
+
+    # Build history array
+    history_items = _scan_history(session_id)
+    messages = []
+    for itm in history_items:
+        if "user_text" in itm:
+            messages.append({"role": "user", "content": itm["user_text"], "timestamp": itm.get("timestamp")})
+        if "bot_reply" in itm:
+            messages.append({"role": "bot", "content": itm["bot_reply"], "timestamp": itm.get("timestamp")})
+
+    # Include 'answer' explicitly for the frontend
+    return _response(200, {
+        "sessionId": session_id,
+        "answer": bot_reply or None,
+        "messages": messages,
+        "rawLex": lex_resp
+    })
