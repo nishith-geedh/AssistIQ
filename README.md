@@ -1,13 +1,5 @@
 # AssistIQ – AWS-Powered IT Helpdesk Bot (Lex V2)
-
-[![AWS Lambda](https://img.shields.io/badge/AWS%20Lambda-Serverless-orange?logo=awslambda)](https://aws.amazon.com/lambda/)  
-[![Amazon Lex](https://img.shields.io/badge/Amazon%20Lex-Chatbot-0052CC?logo=amazon)](https://aws.amazon.com/lex/)  
-[![Amazon DynamoDB](https://img.shields.io/badge/DynamoDB-NoSQL-blue?logo=amazon-dynamodb)](https://aws.amazon.com/dynamodb/)  
-[![Amazon SES](https://img.shields.io/badge/Amazon%20SES-Email%20Service-232F3E?logo=amazon-aws)](https://aws.amazon.com/ses/)  
-[![GitHub repo size](https://img.shields.io/github/repo-size/nishith-geedh/AssistIQ?color=6aa64d)](https://github.com/nishith-geedh/AssistIQ)  
-[![GitHub contributors](https://img.shields.io/github/contributors/nishith-geedh/AssistIQ?color=BC69FA)](https://github.com/nishith-geedh/AssistIQ/graphs/contributors)  
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)  
-[![Last Commit](https://img.shields.io/github/last-commit/nishith-geedh/AssistIQ?logo=github)](https://github.com/nishith-geedh/AssistIQ/commits/main)  
+[![AWS Lambda](https://img.shields.io/badge/AWS%20Lambda-Serverless-orange?logo=awslambda)](https://aws.amazon.com/lambda/) [![Amazon Lex](https://img.shields.io/badge/Amazon%20Lex-Chatbot-0052CC?logo=amazon)](https://aws.amazon.com/lex/) [![Amazon DynamoDB](https://img.shields.io/badge/DynamoDB-NoSQL-blue?logo=amazon-dynamodb)](https://aws.amazon.com/dynamodb/) [![Amazon SES](https://img.shields.io/badge/Amazon%20SES-Email%20Service-232F3E?logo=amazon-aws)](https://aws.amazon.com/ses/) [![GitHub repo size](https://img.shields.io/github/repo-size/nishith-geedh/AssistIQ?color=6aa64d)](https://github.com/nishith-geedh/AssistIQ) [![GitHub contributors](https://img.shields.io/github/contributors/nishith-geedh/AssistIQ?color=BC69FA)](https://github.com/nishith-geedh/AssistIQ/graphs/contributors) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Last Commit](https://img.shields.io/github/last-commit/nishith-geedh/AssistIQ?logo=github)](https://github.com/nishith-geedh/AssistIQ/commits/main)
 
 ---
 
@@ -85,14 +77,12 @@ AssistIQ/
 
 ## 🚀 Quick Start  
 
-### 1️⃣ Prerequisites
+### 0️⃣ Prerequisites
 
 - AWS account + IAM user/role with admin (or equivalent) for setup.
 - Region: choose one where **Lex V2** and **SES** are available (e.g., `us-east-1`).
 - Tools:
   - AWS CLI configured: `aws configure` 
-
-Hide
   - AWS SAM CLI
   - Python 3.10+ (for local seeding script)
 
@@ -227,6 +217,8 @@ SUPPORT_EMAIL=it-team@example.com
 - If **confirmed** → Logs interaction, sends escalation email with transcript  
 - If **fallback** → Escalates automatically with entire conversation  
 
+![Workflow Diagram](./demo/workflow%20diagram.png)
+
 ---
 
 ## 🏗️ Architecture Diagram  
@@ -242,6 +234,73 @@ User ─► Website UI ─► Amazon Lex ─► AWS Lambda (app.py)
                                 ▼
                            Amazon SES (Escalation Emails)
 </pre>
+
+---
+### Visual
+
+![Architecture Diagram](./demo/assistiq%20architecture.png)
+![Architecture Diagram](./demo/assistiq%20architecture1.png)
+
+The AssistIQ architecture is a robust, AWS-native solution that meticulously separates every concern for security, maintainability, and operational excellence. Here is a deep-dive technical explanation of each architecture tier, mapping components precisely from the diagram and your implementation.
+________________________________________
+User / Presentation Tier
+•	End User interacts with a modern, glass-morphism web UI, loaded directly from an Amazon S3 bucket. This provides high availability, performance, and a globally distributed interface. All assets—including HTML, JS (the floating chat FAB/widget), CSS, and brand images—are served static from S3 with public access enabled, and responsive design for any device.
+•	Website (S3 Static Hosting):
+•	No backend code is exposed to users.
+•	All user interaction with AssistIQ begins from here, guaranteeing rapid page loads and nearly zero downtime.
+________________________________________
+API Layer
+•	API Gateway acts as the secure front-door for the entire backend.
+•	Terminates TLS, enforces CORS, and publishes a single /chat POST endpoint.
+•	Automatically scales with traffic and protects against malformed requests or attacks.
+•	Only invokes trusted Lambda functions, never exposing backend internals or credentials.
+________________________________________
+Orchestration Layer
+•	ChatProxy Lambda (and ChatRoute Lambda, same codebase) serves as the orchestrator for all chat operations:
+•	Handles raw HTTP requests from API Gateway, parses input and headers, manages persistent session IDs, and applies CORS policies.
+•	Logs every conversation turn in DynamoDB, providing a full chat transcript for each unique session.
+•	Routes valid chat messages to Lex, preserving user identity and session context for stateful dialogue.
+•	Returns bot responses (and full chat history) as neat JSON for instantaneous frontend display.
+•	Ensures fault-tolerance: supports CORS preflight, status codes, and robust error handling.
+________________________________________
+AI / Chatbot Layer
+•	Amazon Lex V2 provides state-of-the-art NLU:
+•	Recognizes fine-grained IT support intents (e.g., password reset, Wi-Fi, VPN, email, hardware, fallback).
+•	Handles slot extraction, confirmation flows, and fallback detection, per your imported Lex training set and scripts.
+•	Seamlessly integrates with Lambda for fulfillment, sending context-rich events downstream for every intent.
+________________________________________
+Fulfillment & Backend Logic
+•	Fulfillment Lambda is where custom business logic executes:
+•	Connects to DynamoDB tables:
+•	FAQ Table: Stores per-intent config, sample utterances, fulfillment text, closing messages (from your JSON-based seeds).
+•	ChatLogs Table: Saves every question, bot reply, confidence score, and session/thread context for analytics and auditing.
+•	Session State Table: Maintains dialog context for multi-turn flows, slot-filling, and legacy confirmation states.
+•	Implements intent-specific confirmation, fulfillment, and closing logic, returning rich, user-friendly bot messages.
+•	When faced with low-confidence, unknown, or fallback queries, compiles a full transcript and sends escalation emails using Amazon SES, complete with session metadata and chat history attached.
+•	Ensures IT support can review all details without context loss; automates Tier 2 handoff.
+•	Fault-tolerance: logs escalation success or failure, responds to user accordingly.
+________________________________________
+Security
+•	IAM Roles & Policies
+•	Each Lambda function uses least-privilege roles to access only the necessary DynamoDB tables, Lex, and SES actions.
+•	No AWS service is over-permissioned; separation of roles prevents lateral access and privilege escalation.
+•	VPC / PrivateLink Option
+•	All core resources (Lambda, DynamoDB, API Gateway) can be VPC-bound or behind PrivateLinks for internal-only access.
+•	S3 bucket public access is tightly controlled for static asset delivery, never for backend data.
+•	Audit Logging
+•	Every interaction—successful or failed—is logged for future review, compliance, and retraining.
+________________________________________
+Analytics & Retraining
+•	Intent Analytics:
+•	ChatLogs DynamoDB table enables powerful querying for bot performance statistics, fallback frequency, and session analysis.
+•	All low-confidence or fallback queries are flagged, so IT admins can label, retrain, and expand the bot’s brain.
+•	Batch export of historic logs supports Lex V2 retraining and FAQ table enrichment without loss of metadata.
+•	Continuous Improvement:
+•	Fallback and escalated conversations are automatically harvested for expansion of Lex’s utterance base or FAQ answers.
+•	Bot confidence scores and user feedback enable targeted updates to intents and flows (no manual log scraping required).
+________________________________________
+This architecture ensures AssistIQ is serverless, auditable, modular, and instantly scalable—from 10 users to 10,000+. Each AWS service is isolated but deeply integrated, guaranteeing security, maintainability, and delightful UX at every touchpoint
+
 
 ---
 
@@ -272,7 +331,7 @@ User ─► Website UI ─► Amazon Lex ─► AWS Lambda (app.py)
 | Lambda      | Fulfillment logic         | Pay per invocation     | Scales-to-zero      |
 | Amazon Lex  | Conversational AI         | Per request            | Auto-scaled         |
 | Amazon SES  | Escalation emails         | Pay per email sent     | Global delivery     |
-| Amplify     | Hosting frontend          | Static + build usage   | Global CDN          |
+| S3          | Hosting static frontend   | Pay per GB stored      | Global delivery     |
 
 ---
 
