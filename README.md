@@ -9,29 +9,29 @@ It responds to employee IT issues, maintains chat logs, and automatically escala
 ---
 
 ## Table of Contents
----
 
-- [Features](#✨-features)
-- [Project Structure](#📂-project-structure)
-- [Quick Start](#🚀-quick-start)
+
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
 - [Configure SES (email escalation)](#configure-ses-email-escalation)
 - [Create the Lex V2 bot](#create-the-lex-v2-bot)
-- [Backend Deployment (AWS SAM)](#1️⃣-backend-deployment-aws-sam)
-- [Frontend Setup](#2️⃣-frontend-setup)
+- [Backend Deployment (AWS SAM)](#backend-deployment-aws-sam)
+- [Frontend Setup](#frontend-setup)
 - [Publish the website](#publish-the-website)
 - [Seed the FAQ table (optional demo content)](#seed-the-faq-table-optional-demo-content)
 - [Wire Lex → Fulfillment Lambda](#wire-lex--fulfillment-lambda)
 - [Monitoring & Feedback](#monitoring--feedback)
 - [Security](#security)
 - [Common issues & fixes](#common-issues--fixes)
-- [Environment Variables](#🔑-environment-variables)
-- [Intent Workflow](#🧠-intent-workflow)
-- [Architecture Diagram](#🏗️-architecture-diagram)
+- [Environment Variables](#environment-variables)
+- [Intent Workflow](#intent-workflow)
+- [Architecture Diagram](#architecture-diagram)
 - [Screenshots](#screenshots)
-- [Cost & Scalability](#📈-cost--scalability)
-- [Sample Conversation Flow](#🔄-sample-conversation-flow)
-- [Contributing](#🤝-contributing)
-- [License](#📜-license)
+- [Cost & Scalability](#cost--scalability)
+- [Sample Conversation Flow](#sample-conversation-flow)
+- [Contributing](#contributing)
+- [License](#license)
 
 
 ---
