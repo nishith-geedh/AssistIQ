@@ -219,13 +219,19 @@ SUPPORT_EMAIL=it-team@example.com
 
 ![Workflow Diagram](./demo/workflow%20diagram.png)
 
-•	The user interacts with the chatbot through a web widget, hosted on S3. Static assets are loaded from the S3 bucket.
-•	When the user sends a message, the request goes via API Gateway (/chat) to the ChatProxy Lambda function, which orchestrates communication and logs the conversation.
-•	The ChatProxyFunction calls the Amazon Lex V2 bot, which handles natural language understanding and detects user intent.
-•	Lex returns the intent, which the Fulfillment Lambda function receives; it then queries DynamoDB for the appropriate FAQ (intent fulfillment), logs the conversation and session state, and if needed, triggers an Amazon SES email for fallback or unhandled queries.
-•	The SES service sends escalation emails to IT agents when automation fails; the user receives a notification about escalation via the frontend.
-•	All conversational logs and session data are stored in DynamoDB tables for monitoring, retraining, and audit.
-•	A feedback/retraining loop is established to update Lex with analytics data, driving continuous improvement.
+- The user interacts with the chatbot through a web widget, hosted on S3. Static assets are loaded from the S3 bucket.
+
+- When the user sends a message, the request goes via API Gateway (/chat) to the ChatProxy Lambda function, which orchestrates communication and logs the conversation.
+
+- The ChatProxyFunction calls the Amazon Lex V2 bot, which handles natural language understanding and detects user intent.
+
+- Lex returns the intent, which the Fulfillment Lambda function receives; it then queries DynamoDB for the appropriate FAQ (intent fulfillment), logs the conversation and session state, and if needed, triggers an Amazon SES email for fallback or unhandled queries.
+
+- The SES service sends escalation emails to IT agents when automation fails; the user receives a notification about escalation via the frontend.
+
+- All conversational logs and session data are stored in DynamoDB tables for monitoring, retraining, and audit.
+
+- A feedback/retraining loop is established to update Lex with analytics data, driving continuous improvement.
 
 
 ---
@@ -252,63 +258,70 @@ User ─► Website UI ─► Amazon Lex ─► AWS Lambda (app.py)
 
 The AssistIQ architecture is a robust, AWS-native solution that meticulously separates every concern for security, maintainability, and operational excellence. Here is a deep-dive technical explanation of each architecture tier, mapping components precisely from the diagram and your implementation.
 ________________________________________
-User / Presentation Tier
-•	End User interacts with a modern, glass-morphism web UI, loaded directly from an Amazon S3 bucket. This provides high availability, performance, and a globally distributed interface. All assets—including HTML, JS (the floating chat FAB/widget), CSS, and brand images—are served static from S3 with public access enabled, and responsive design for any device.
-•	Website (S3 Static Hosting):
-•	No backend code is exposed to users.
-•	All user interaction with AssistIQ begins from here, guaranteeing rapid page loads and nearly zero downtime.
+### User / Presentation Tier
+
+-	End User interacts with a modern, glass-morphism web UI, loaded directly from an Amazon S3 bucket. This provides high availability, performance, and a globally distributed interface. All assets—including HTML, JS (the floating chat FAB/widget), CSS, and brand images—are served static from S3 with public access enabled, and responsive design for any device.
+-	Website (S3 Static Hosting):
+-	No backend code is exposed to users.
+-	All user interaction with AssistIQ begins from here, guaranteeing rapid page loads and nearly zero downtime.
 ________________________________________
-API Layer
-•	API Gateway acts as the secure front-door for the entire backend.
-•	Terminates TLS, enforces CORS, and publishes a single /chat POST endpoint.
-•	Automatically scales with traffic and protects against malformed requests or attacks.
-•	Only invokes trusted Lambda functions, never exposing backend internals or credentials.
+### API Layer
+
+-	API Gateway acts as the secure front-door for the entire backend.
+-	Terminates TLS, enforces CORS, and publishes a single /chat POST endpoint.
+-	Automatically scales with traffic and protects against malformed requests or attacks.
+-	Only invokes trusted Lambda functions, never exposing backend internals or credentials.
 ________________________________________
-Orchestration Layer
-•	ChatProxy Lambda (and ChatRoute Lambda, same codebase) serves as the orchestrator for all chat operations:
-•	Handles raw HTTP requests from API Gateway, parses input and headers, manages persistent session IDs, and applies CORS policies.
-•	Logs every conversation turn in DynamoDB, providing a full chat transcript for each unique session.
-•	Routes valid chat messages to Lex, preserving user identity and session context for stateful dialogue.
-•	Returns bot responses (and full chat history) as neat JSON for instantaneous frontend display.
-•	Ensures fault-tolerance: supports CORS preflight, status codes, and robust error handling.
+### Orchestration Layer
+
+-	ChatProxy Lambda (and ChatRoute Lambda, same codebase) serves as the orchestrator for all chat operations:
+-	Handles raw HTTP requests from API Gateway, parses input and headers, manages persistent session IDs, and applies CORS policies.
+-	Logs every conversation turn in DynamoDB, providing a full chat transcript for each unique session.
+-	Routes valid chat messages to Lex, preserving user identity and session context for stateful dialogue.
+-	Returns bot responses (and full chat history) as neat JSON for instantaneous frontend display.
+-	Ensures fault-tolerance: supports CORS preflight, status codes, and robust error handling.
 ________________________________________
-AI / Chatbot Layer
-•	Amazon Lex V2 provides state-of-the-art NLU:
-•	Recognizes fine-grained IT support intents (e.g., password reset, Wi-Fi, VPN, email, hardware, fallback).
-•	Handles slot extraction, confirmation flows, and fallback detection, per your imported Lex training set and scripts.
-•	Seamlessly integrates with Lambda for fulfillment, sending context-rich events downstream for every intent.
+### AI / Chatbot Layer
+
+-	Amazon Lex V2 provides state-of-the-art NLU:
+-	Recognizes fine-grained IT support intents (e.g., password reset, Wi-Fi, VPN, email, hardware, fallback).
+-	Handles slot extraction, confirmation flows, and fallback detection, per your imported Lex training set and scripts.
+-	Seamlessly integrates with Lambda for fulfillment, sending context-rich events downstream for every intent.
 ________________________________________
-Fulfillment & Backend Logic
-•	Fulfillment Lambda is where custom business logic executes:
-•	Connects to DynamoDB tables:
-•	FAQ Table: Stores per-intent config, sample utterances, fulfillment text, closing messages (from your JSON-based seeds).
-•	ChatLogs Table: Saves every question, bot reply, confidence score, and session/thread context for analytics and auditing.
-•	Session State Table: Maintains dialog context for multi-turn flows, slot-filling, and legacy confirmation states.
-•	Implements intent-specific confirmation, fulfillment, and closing logic, returning rich, user-friendly bot messages.
-•	When faced with low-confidence, unknown, or fallback queries, compiles a full transcript and sends escalation emails using Amazon SES, complete with session metadata and chat history attached.
-•	Ensures IT support can review all details without context loss; automates Tier 2 handoff.
-•	Fault-tolerance: logs escalation success or failure, responds to user accordingly.
+### Fulfillment & Backend Logic
+
+-	Fulfillment Lambda is where custom business logic executes:
+-	Connects to DynamoDB tables:
+-	FAQ Table: Stores per-intent config, sample utterances, fulfillment text, closing messages (from your JSON-based seeds).
+-	ChatLogs Table: Saves every question, bot reply, confidence score, and session/thread context for analytics and auditing.
+-	Session State Table: Maintains dialog context for multi-turn flows, slot-filling, and legacy confirmation states.
+-	Implements intent-specific confirmation, fulfillment, and closing logic, returning rich, user-friendly bot messages.
+-	When faced with low-confidence, unknown, or fallback queries, compiles a full transcript and sends escalation emails using Amazon SES, complete with session metadata and chat history attached.
+-	Ensures IT support can review all details without context loss; automates Tier 2 handoff.
+-	Fault-tolerance: logs escalation success or failure, responds to user accordingly.
 ________________________________________
-Security
-•	IAM Roles & Policies
-•	Each Lambda function uses least-privilege roles to access only the necessary DynamoDB tables, Lex, and SES actions.
-•	No AWS service is over-permissioned; separation of roles prevents lateral access and privilege escalation.
-•	VPC / PrivateLink Option
-•	All core resources (Lambda, DynamoDB, API Gateway) can be VPC-bound or behind PrivateLinks for internal-only access.
-•	S3 bucket public access is tightly controlled for static asset delivery, never for backend data.
-•	Audit Logging
-•	Every interaction—successful or failed—is logged for future review, compliance, and retraining.
+### Security
+
+-	IAM Roles & Policies
+-	Each Lambda function uses least-privilege roles to access only the necessary DynamoDB tables, Lex, and SES actions.
+-	No AWS service is over-permissioned; separation of roles prevents lateral access and privilege escalation.
+-	VPC / PrivateLink Option
+-	All core resources (Lambda, DynamoDB, API Gateway) can be VPC-bound or behind PrivateLinks for internal-only access.
+-	S3 bucket public access is tightly controlled for static asset delivery, never for backend data.
+-	Audit Logging
+-	Every interaction—successful or failed—is logged for future review, compliance, and retraining.
 ________________________________________
-Analytics & Retraining
-•	Intent Analytics:
-•	ChatLogs DynamoDB table enables powerful querying for bot performance statistics, fallback frequency, and session analysis.
-•	All low-confidence or fallback queries are flagged, so IT admins can label, retrain, and expand the bot’s brain.
-•	Batch export of historic logs supports Lex V2 retraining and FAQ table enrichment without loss of metadata.
-•	Continuous Improvement:
-•	Fallback and escalated conversations are automatically harvested for expansion of Lex’s utterance base or FAQ answers.
-•	Bot confidence scores and user feedback enable targeted updates to intents and flows (no manual log scraping required).
+### Analytics & Retraining
+
+-	Intent Analytics:
+-	ChatLogs DynamoDB table enables powerful querying for bot performance statistics, fallback frequency, and session analysis.
+-	All low-confidence or fallback queries are flagged, so IT admins can label, retrain, and expand the bot’s brain.
+-	Batch export of historic logs supports Lex V2 retraining and FAQ table enrichment without loss of metadata.
+-	Continuous Improvement:
+-	Fallback and escalated conversations are automatically harvested for expansion of Lex’s utterance base or FAQ answers.
+-	Bot confidence scores and user feedback enable targeted updates to intents and flows (no manual log scraping required).
 ________________________________________
-This architecture ensures AssistIQ is serverless, auditable, modular, and instantly scalable—from 10 users to 10,000+. Each AWS service is isolated but deeply integrated, guaranteeing security, maintainability, and delightful UX at every touchpoint
+- This architecture ensures AssistIQ is serverless, auditable, modular, and instantly scalable—from 10 users to 10,000+. Each AWS service is isolated but deeply integrated, guaranteeing security, maintainability, and delightful UX at every touchpoint
 
 
 ---
