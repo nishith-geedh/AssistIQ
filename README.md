@@ -219,6 +219,15 @@ SUPPORT_EMAIL=it-team@example.com
 
 ![Workflow Diagram](./demo/workflow%20diagram.png)
 
+•	The user interacts with the chatbot through a web widget, hosted on S3. Static assets are loaded from the S3 bucket.
+•	When the user sends a message, the request goes via API Gateway (/chat) to the ChatProxy Lambda function, which orchestrates communication and logs the conversation.
+•	The ChatProxyFunction calls the Amazon Lex V2 bot, which handles natural language understanding and detects user intent.
+•	Lex returns the intent, which the Fulfillment Lambda function receives; it then queries DynamoDB for the appropriate FAQ (intent fulfillment), logs the conversation and session state, and if needed, triggers an Amazon SES email for fallback or unhandled queries.
+•	The SES service sends escalation emails to IT agents when automation fails; the user receives a notification about escalation via the frontend.
+•	All conversational logs and session data are stored in DynamoDB tables for monitoring, retraining, and audit.
+•	A feedback/retraining loop is established to update Lex with analytics data, driving continuous improvement.
+
+
 ---
 
 ## 🏗️ Architecture Diagram  
